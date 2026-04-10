@@ -12,27 +12,13 @@ const TEMPLATES_TABLE = 'tblNQzAYRkPIJ85TM';
 const INTERACTIONS_TABLE = 'tblnQ3sBBqd1UnO4t';
 
 // Interactions field IDs
-const F_SUBJECT        = 'fldobLsEfXNvwziFt';
-const F_EMAIL_BODY     = 'fldlW7VPi0ft7zWXv';
-const F_PEOPLE         = 'fldZezQOhy76qUG9I';
-const F_DATE           = 'fldYUUSMlYF7DmgZm';
-const F_TYPE           = 'fld5afjc2wU1eBnXN';
-const F_NOTES          = 'fldFPj2OK8FktcakJ';
-const F_SENDER_EMAIL   = 'fldeCeoUqDntsgKUZ';
-const F_EMAIL_TEMPLATE = 'fldaEj2JAssfoMtHU';
-
-// Helper — always return a plain string from any input
-function toStr(val) {
-  if (val === null || val === undefined) return '';
-  if (typeof val === 'string') return val.trim();
-  if (typeof val === 'object') {
-    // Handle {id: 'recXXX'} or {value: 'recXXX'} shapes
-    if (val.id) return String(val.id).trim();
-    if (val.value) return String(val.value).trim();
-    return '';
-  }
-  return String(val).trim();
-}
+const F_SUBJECT      = 'fldobLsEfXNvwziFt';
+const F_EMAIL_BODY   = 'fldlW7VPi0ft7zWXv';
+const F_PEOPLE       = 'fldZezQOhy76qUG9I';
+const F_DATE         = 'fldYUUSMlYF7DmgZm';
+const F_TYPE         = 'fld5afjc2wU1eBnXN';
+const F_NOTES        = 'fldFPj2OK8FktcakJ';
+const F_SENDER_EMAIL = 'fldeCeoUqDntsgKUZ';
 
 // GET /templates
 app.get('/templates', async (req, res) => {
@@ -52,7 +38,7 @@ app.get('/templates', async (req, res) => {
 
     if (!data.records) {
       console.error('Airtable templates error:', JSON.stringify(data));
-      return res.status(500).json({ error: 'Airtable returned no records', detail: data });
+      return res.status(500).json({ error: 'Failed to fetch templates' });
     }
 
     const templates = data.records.map(r => ({
@@ -71,28 +57,23 @@ app.get('/templates', async (req, res) => {
 
 // POST /log
 app.post('/log', async (req, res) => {
-  // Log exactly what arrived for debugging
-  console.log('POST /log received body:', JSON.stringify(req.body));
+  console.log('POST /log body:', JSON.stringify(req.body));
 
-  // Safely extract and coerce every field to a plain string
-  const contactId   = toStr(req.body.contactId);
-  const subject     = toStr(req.body.subject);
-  const body        = toStr(req.body.body);
-  const notes       = toStr(req.body.notes);
-  const senderEmail = toStr(req.body.senderEmail);
-  const templateId  = toStr(req.body.templateId);
+  // Safely coerce every value to a plain string
+  const contactId   = String(req.body.contactId   || '').trim();
+  const subject     = String(req.body.subject     || '').trim();
+  const body        = String(req.body.body        || '').trim();
+  const notes       = String(req.body.notes       || '').trim();
+  const senderEmail = String(req.body.senderEmail || '').trim();
 
-  console.log('Parsed contactId:', contactId);
-  console.log('Parsed subject:', subject);
+  console.log('contactId:', contactId);
 
-  if (!contactId || !contactId.startsWith('rec')) {
-    return res.status(400).json({
-      error: `Invalid contactId: "${contactId}". Must be an Airtable record ID starting with "rec".`
-    });
+  if (!contactId.startsWith('rec')) {
+    return res.status(400).json({ error: 'Invalid contactId: ' + contactId });
   }
 
   if (!subject) {
-    return res.status(400).json({ error: 'Subject is required.' });
+    return res.status(400).json({ error: 'Subject is required' });
   }
 
   try {
@@ -103,14 +84,11 @@ app.post('/log', async (req, res) => {
       [F_TYPE]: 'Email - General'
     };
 
-    if (body)        fields[F_EMAIL_BODY] = body;
-    if (notes)       fields[F_NOTES] = notes;
+    if (body)        fields[F_EMAIL_BODY]   = body;
+    if (notes)       fields[F_NOTES]        = notes;
     if (senderEmail) fields[F_SENDER_EMAIL] = senderEmail;
-    if (templateId && templateId.startsWith('rec')) {
-      fields[F_EMAIL_TEMPLATE] = [{ id: templateId }];
-    }
 
-    console.log('Writing to Airtable with fields:', JSON.stringify(fields));
+    console.log('Writing fields:', JSON.stringify(fields));
 
     const response = await fetch(
       `https://api.airtable.com/v0/${BASE_ID}/${INTERACTIONS_TABLE}`,
@@ -128,14 +106,14 @@ app.post('/log', async (req, res) => {
 
     if (data.error) {
       console.error('Airtable write error:', JSON.stringify(data));
-      return res.status(400).json({ error: data.error.message || data.error });
+      return res.status(400).json({ error: data.error.message || JSON.stringify(data.error) });
     }
 
-    console.log('Successfully logged interaction:', data.id);
+    console.log('Logged successfully:', data.id);
     res.json({ success: true, recordId: data.id });
 
   } catch (err) {
-    console.error('Error logging interaction:', err);
+    console.error('Unexpected error:', err);
     res.status(500).json({ error: 'Failed to log interaction' });
   }
 });
