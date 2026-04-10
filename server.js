@@ -58,7 +58,10 @@ app.get('/templates', async (req, res) => {
 
 // POST /log — create an Interactions record
 app.post('/log', async (req, res) => {
-  const { contactId, subject, body, notes, senderEmail, templateId } = req.body;
+  const { subject, body, notes, senderEmail, templateId } = req.body;
+  const contactId = typeof req.body.contactId === 'object'
+    ? req.body.contactId.id || String(req.body.contactId)
+    : String(req.body.contactId || '');
 
   if (!contactId || !subject) {
     return res.status(400).json({ error: 'contactId and subject are required' });
@@ -68,7 +71,7 @@ app.post('/log', async (req, res) => {
     const fields = {
       [F_SUBJECT]: subject,
       [F_EMAIL_BODY]: body || '',
-      [F_PEOPLE]: [{ id: contactId }],
+      [F_PEOPLE]: [{ id: contactId.trim() }],
       [F_DATE]: new Date().toISOString(),
       [F_TYPE]: 'Email - General'
     };
