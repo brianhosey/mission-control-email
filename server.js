@@ -31,7 +31,7 @@ const F_EMAIL_TEMPLATE   = 'fldaEj2JAssfoMtHU';
 app.get('/templates', async (req, res) => {
   try {
     const url = `https://api.airtable.com/v0/${BASE_ID}/${TEMPLATES_TABLE}` +
-      `?filterByFormula={${F_TEMPLATE_ACTIVE}}=1` +
+      `?filterByFormula={isActive}=1` +
       `&fields[]=${F_TEMPLATE_NAME}&fields[]=${F_TEMPLATE_SUBJECT}&fields[]=${F_TEMPLATE_BODY}` +
       `&sort[0][field]=${F_TEMPLATE_NAME}&sort[0][direction]=asc`;
 
