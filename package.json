@@ -1,0 +1,17 @@
+{
+  "name": "mission-control-email",
+  "version": "1.0.0",
+  "description": "Email draft drawer for Mission Control — serves the UI and proxies Airtable API calls",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
