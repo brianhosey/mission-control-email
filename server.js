@@ -70,7 +70,7 @@ app.post('/log', async (req, res) => {
 
   const fields = {
     [F_SUBJECT]: subject,
-    [F_PEOPLE]:  [{ id: contactId }],
+    [F_PEOPLE]: [contactId],
     [F_DATE]:    new Date().toISOString(),
     [F_TYPE]:    'Email - General'
   };
@@ -90,7 +90,7 @@ app.post('/log', async (req, res) => {
           Authorization: `Bearer ${AIRTABLE_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ fields, typecast: true })
+        body: JSON.stringify({ fields })
       }
     );
 
