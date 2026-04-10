@@ -21,11 +21,24 @@ const F_NOTES          = 'fldFPj2OK8FktcakJ';
 const F_SENDER_EMAIL   = 'fldeCeoUqDntsgKUZ';
 const F_EMAIL_TEMPLATE = 'fldaEj2JAssfoMtHU';
 
-// GET /templates — fetch all active templates using field names (more reliable than IDs in URL params)
+// Helper — always return a plain string from any input
+function toStr(val) {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'string') return val.trim();
+  if (typeof val === 'object') {
+    // Handle {id: 'recXXX'} or {value: 'recXXX'} shapes
+    if (val.id) return String(val.id).trim();
+    if (val.value) return String(val.value).trim();
+    return '';
+  }
+  return String(val).trim();
+}
+
+// GET /templates
 app.get('/templates', async (req, res) => {
   try {
     const params = new URLSearchParams({
-      filterByFormula: "isActive=1",
+      filterByFormula: 'isActive=1',
       'sort[0][field]': 'templateName',
       'sort[0][direction]': 'asc'
     });
@@ -38,7 +51,7 @@ app.get('/templates', async (req, res) => {
     const data = await response.json();
 
     if (!data.records) {
-      console.error('Airtable error:', JSON.stringify(data));
+      console.error('Airtable templates error:', JSON.stringify(data));
       return res.status(500).json({ error: 'Airtable returned no records', detail: data });
     }
 
@@ -56,29 +69,48 @@ app.get('/templates', async (req, res) => {
   }
 });
 
-// POST /log — create an Interactions record
+// POST /log
 app.post('/log', async (req, res) => {
-  const { subject, body, notes, senderEmail, templateId } = req.body;
-  const contactId = typeof req.body.contactId === 'object'
-    ? req.body.contactId.id || String(req.body.contactId)
-    : String(req.body.contactId || '');
+  // Log exactly what arrived for debugging
+  console.log('POST /log received body:', JSON.stringify(req.body));
 
-  if (!contactId || !subject) {
-    return res.status(400).json({ error: 'contactId and subject are required' });
+  // Safely extract and coerce every field to a plain string
+  const contactId   = toStr(req.body.contactId);
+  const subject     = toStr(req.body.subject);
+  const body        = toStr(req.body.body);
+  const notes       = toStr(req.body.notes);
+  const senderEmail = toStr(req.body.senderEmail);
+  const templateId  = toStr(req.body.templateId);
+
+  console.log('Parsed contactId:', contactId);
+  console.log('Parsed subject:', subject);
+
+  if (!contactId || !contactId.startsWith('rec')) {
+    return res.status(400).json({
+      error: `Invalid contactId: "${contactId}". Must be an Airtable record ID starting with "rec".`
+    });
+  }
+
+  if (!subject) {
+    return res.status(400).json({ error: 'Subject is required.' });
   }
 
   try {
     const fields = {
       [F_SUBJECT]: subject,
-      [F_EMAIL_BODY]: body || '',
-      [F_PEOPLE]: [{ id: contactId.trim() }],
+      [F_PEOPLE]: [{ id: contactId }],
       [F_DATE]: new Date().toISOString(),
       [F_TYPE]: 'Email - General'
     };
 
+    if (body)        fields[F_EMAIL_BODY] = body;
     if (notes)       fields[F_NOTES] = notes;
     if (senderEmail) fields[F_SENDER_EMAIL] = senderEmail;
-    if (templateId)  fields[F_EMAIL_TEMPLATE] = [{ id: templateId }];
+    if (templateId && templateId.startsWith('rec')) {
+      fields[F_EMAIL_TEMPLATE] = [{ id: templateId }];
+    }
+
+    console.log('Writing to Airtable with fields:', JSON.stringify(fields));
 
     const response = await fetch(
       `https://api.airtable.com/v0/${BASE_ID}/${INTERACTIONS_TABLE}`,
@@ -93,12 +125,15 @@ app.post('/log', async (req, res) => {
     );
 
     const data = await response.json();
+
     if (data.error) {
-      console.error('Airtable write error:', data);
-      return res.status(400).json({ error: data.error });
+      console.error('Airtable write error:', JSON.stringify(data));
+      return res.status(400).json({ error: data.error.message || data.error });
     }
 
+    console.log('Successfully logged interaction:', data.id);
     res.json({ success: true, recordId: data.id });
+
   } catch (err) {
     console.error('Error logging interaction:', err);
     res.status(500).json({ error: 'Failed to log interaction' });
