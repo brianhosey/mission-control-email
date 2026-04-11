@@ -6,19 +6,21 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
-const BASE_ID = 'appI5TaR5KnZM0Hst';
-const TEMPLATES_TABLE = 'tblNQzAYRkPIJ85TM';
+const AIRTABLE_API_KEY   = process.env.AIRTABLE_API_KEY;
+const BASE_ID            = 'appI5TaR5KnZM0Hst';
+const TEMPLATES_TABLE    = 'tblNQzAYRkPIJ85TM';
 const INTERACTIONS_TABLE = 'tblnQ3sBBqd1UnO4t';
 
-const F_SUBJECT      = 'fldobLsEfXNvwziFt';
-const F_EMAIL_BODY   = 'fldlW7VPi0ft7zWXv';
-const F_PEOPLE       = 'fldZezQOhy76qUG9I';
-const F_DATE         = 'fldYUUSMlYF7DmgZm';
-const F_TYPE         = 'fld5afjc2wU1eBnXN';
-const F_NOTES        = 'fldFPj2OK8FktcakJ';
-const F_SENDER_EMAIL = 'fldeCeoUqDntsgKUZ';
+// ── Interactions field IDs (verified Apr 10 2026) ──────────────────────────
+const F_SUBJECT      = 'fldobLsEfXNvwziFt'; // subject      — singleLineText
+const F_EMAIL_BODY   = 'fldlW7VPi0ft7zWXv'; // emailBody    — richText
+const F_CONTACT      = 'fldZezQOhy76qUG9I'; // contact      — multipleRecordLinks → Contacts
+const F_DATE         = 'fldYUUSMlYF7DmgZm'; // date         — dateTime
+const F_TYPE         = 'fld5afjc2wU1eBnXN'; // type         — singleSelect
+const F_NOTES        = 'fldFPj2OK8FktcakJ'; // notes        — multilineText
+const F_SENDER_EMAIL = 'fldeCeoUqDntsgKUZ'; // senderEmail  — email
 
+// ── GET /templates ─────────────────────────────────────────────────────────
 app.get('/templates', async (req, res) => {
   try {
     const params = new URLSearchParams({
@@ -40,10 +42,10 @@ app.get('/templates', async (req, res) => {
     }
 
     res.json(data.records.map(r => ({
-      id: r.id,
-      name: r.fields['templateName'] || '',
-      subject: r.fields['subject'] || '',
-      body: r.fields['body'] || ''
+      id:      r.id,
+      name:    r.fields['templateName'] || '',
+      subject: r.fields['subject']      || '',
+      body:    r.fields['emailBody']    || ''  // field renamed from 'body' to 'emailBody'
     })));
 
   } catch (err) {
@@ -52,8 +54,9 @@ app.get('/templates', async (req, res) => {
   }
 });
 
+// ── POST /log ──────────────────────────────────────────────────────────────
 app.post('/log', async (req, res) => {
-  console.log('Received:', JSON.stringify(req.body));
+  console.log('POST /log:', JSON.stringify(req.body));
 
   const contactId   = String(req.body.contactId   || '').trim();
   const subject     = String(req.body.subject     || '').trim();
@@ -70,7 +73,7 @@ app.post('/log', async (req, res) => {
 
   const fields = {
     [F_SUBJECT]: subject,
-    [F_PEOPLE]: [contactId],
+    [F_CONTACT]: [contactId],           // plain string array — confirmed working format
     [F_DATE]:    new Date().toISOString(),
     [F_TYPE]:    'Email - General'
   };
@@ -101,7 +104,7 @@ app.post('/log', async (req, res) => {
       return res.status(400).json({ error: data.error.message || JSON.stringify(data.error) });
     }
 
-    console.log('Success:', data.id);
+    console.log('Logged:', data.id);
     res.json({ success: true, recordId: data.id });
 
   } catch (err) {
