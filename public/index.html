@@ -257,7 +257,8 @@ textarea.notes {
 </div>
 
 <script>
-var params = new URLSearchParams(window.location.search);
+// ── Parse URL params passed from Noloco ────────────────────────────────────
+var params      = new URLSearchParams(window.location.search);
 var contactId   = params.get('contactId')   || '';
 var firstName   = params.get('firstName')   || '';
 var lastName    = params.get('lastName')    || '';
@@ -265,14 +266,17 @@ var company     = params.get('company')     || '';
 var email       = params.get('email')       || '';
 var senderName  = params.get('senderName')  || '';
 var senderEmail = params.get('senderEmail') || '';
+var senderUserId = params.get('senderUserId') || '';
 
 var templates = [];
 var selectedTemplateId = null;
 
+// Show recipient in header
 document.getElementById('toLine').textContent = email
   ? 'To: ' + firstName + ' ' + lastName + ' \u2014 ' + email
   : 'No email address found for this contact.';
 
+// ── Merge field resolution ─────────────────────────────────────────────────
 function resolveMerge(text) {
   return text
     .replace(/\{\{firstName\}\}/g, firstName)
@@ -282,12 +286,14 @@ function resolveMerge(text) {
     .replace(/\{\{senderName\}\}/g, senderName);
 }
 
+// ── Render the form once templates are loaded ──────────────────────────────
 function renderForm() {
   var options = '<option value="" style="color:#C7C7CC;">\u2014 Select a template \u2014</option>';
   for (var i = 0; i < templates.length; i++) {
     var t = templates[i];
     options += '<option value="' + t.id + '" style="color:#1D1D1F;background-color:#FFFFFF;">' + t.name + '</option>';
   }
+
   document.getElementById('drawerBody').innerHTML =
     '<div class="field-block">' +
       '<div class="field-label">Template</div>' +
@@ -315,6 +321,7 @@ function renderForm() {
   if (!email) setHint('This contact has no email address on file.', 'error');
 }
 
+// ── Fetch templates from server ────────────────────────────────────────────
 async function loadTemplates() {
   try {
     var res = await fetch('/templates');
@@ -328,6 +335,7 @@ async function loadTemplates() {
   }
 }
 
+// ── Apply selected template ────────────────────────────────────────────────
 function applyTemplate() {
   var key = document.getElementById('templateSelect').value;
   var tag = document.getElementById('appliedTag');
@@ -352,6 +360,7 @@ function applyTemplate() {
   setHint('Edit the draft, then click Send & Log.');
 }
 
+// ── Send & Log ─────────────────────────────────────────────────────────────
 async function sendAndLog() {
   var subject = document.getElementById('subjectField').value.trim();
   var body    = document.getElementById('bodyField').value.trim();
@@ -360,10 +369,12 @@ async function sendAndLog() {
   if (!subject) { setHint('Please add a subject before sending.', 'error'); return; }
   if (!contactId) { setHint('No contact ID found. Cannot log.', 'error'); return; }
 
+  // Open Outlook with pre-filled draft
   window.location.href = 'mailto:' + encodeURIComponent(email) +
     '?subject=' + encodeURIComponent(subject) +
     '&body=' + encodeURIComponent(body);
 
+  // Log to Airtable via server
   var btn = document.getElementById('sendLogBtn');
   btn.disabled = true;
   btn.innerHTML = '<span>Logging...</span>';
@@ -373,12 +384,12 @@ async function sendAndLog() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contactId: contactId,
-        subject: subject,
-        body: body,
-        notes: notes,
-        senderEmail: senderEmail,
-        templateId: selectedTemplateId
+        contactId:    contactId,
+        subject:      subject,
+        body:         body,
+        notes:        notes,
+        senderEmail:  senderEmail,
+        senderUserId: senderUserId
       })
     });
     var data = await res.json();
@@ -393,6 +404,7 @@ async function sendAndLog() {
   }
 }
 
+// ── Discard ────────────────────────────────────────────────────────────────
 function discard() {
   var sel = document.getElementById('templateSelect');
   if (sel) sel.value = '';
@@ -412,6 +424,7 @@ function discard() {
   setHint('Opens a draft in Outlook and logs this email.');
 }
 
+// ── Utility ────────────────────────────────────────────────────────────────
 function setHint(msg, type) {
   var hint = document.getElementById('footerHint');
   hint.textContent = msg;
