@@ -24,17 +24,6 @@ html, body {
   height: 100vh;
   background: #FFFFFF;
 }
-.drawer-header {
-  padding: 14px 18px;
-  border-bottom: 1px solid #F2F2F7;
-  flex-shrink: 0;
-}
-.drawer-title {
-  font-size: 15px;
-  font-weight: 500;
-  color: #1D1D1F;
-  letter-spacing: -0.015em;
-}
 .drawer-body {
   flex: 1;
   overflow-y: auto;
@@ -126,26 +115,6 @@ textarea.notes {
   color: #C7C7CC;
   font-style: italic;
 }
-.applied-tag {
-  display: none;
-  align-items: center;
-  gap: 5px;
-  background: #E8F1FF;
-  font-size: 11px;
-  padding: 3px 10px;
-  border-radius: 980px;
-  margin-top: 5px;
-  width: fit-content;
-}
-.applied-tag * { color: #0071E3; }
-.applied-tag.visible { display: inline-flex; }
-.applied-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #0071E3;
-  flex-shrink: 0;
-}
 .rule {
   height: 1px;
   background: #F2F2F7;
@@ -225,10 +194,6 @@ textarea.notes {
 <body>
 
 <div class="drawer">
-  <div class="drawer-header">
-    <div class="drawer-title">Draft Email</div>
-  </div>
-
   <div class="drawer-body" id="drawerBody">
     <div class="loading">Loading templates...</div>
   </div>
@@ -253,11 +218,8 @@ var lastName     = params.get('lastName')     || '';
 var company      = params.get('company')      || '';
 var email        = params.get('email')        || '';
 var senderName   = params.get('senderName')   || '';
-var senderEmail  = params.get('senderEmail')  || '';
-var senderUserId = params.get('senderUserId') || '';
 
 var templates = [];
-var selectedTemplateId = null;
 
 function resolveMerge(text) {
   return text
@@ -279,10 +241,6 @@ function renderForm() {
     '<div class="field-block">' +
       '<div class="field-label">Template</div>' +
       '<select id="templateSelect" onchange="applyTemplate()">' + options + '</select>' +
-      '<div class="applied-tag" id="appliedTag">' +
-        '<div class="applied-dot"></div>' +
-        '<span id="appliedText"></span>' +
-      '</div>' +
     '</div>' +
     '<div class="rule"></div>' +
     '<div class="field-block">' +
@@ -317,12 +275,9 @@ async function loadTemplates() {
 
 function applyTemplate() {
   var key = document.getElementById('templateSelect').value;
-  var tag = document.getElementById('appliedTag');
   if (!key) {
-    tag.classList.remove('visible');
     document.getElementById('subjectField').value = '';
     document.getElementById('bodyField').value = '';
-    selectedTemplateId = null;
     setHint('Opens a draft in Outlook and logs this email.');
     return;
   }
@@ -331,11 +286,8 @@ function applyTemplate() {
     if (templates[i].id === key) { t = templates[i]; break; }
   }
   if (!t) return;
-  selectedTemplateId = t.id;
   document.getElementById('subjectField').value = resolveMerge(t.subject);
   document.getElementById('bodyField').value = resolveMerge(t.body);
-  tag.classList.add('visible');
-  document.getElementById('appliedText').textContent = t.name + ' applied';
   setHint('Edit the draft, then click Send & Log.');
 }
 
@@ -347,10 +299,14 @@ async function sendAndLog() {
   if (!subject) { setHint('Please add a subject before sending.', 'error'); return; }
   if (!contactId) { setHint('No contact ID found. Cannot log.', 'error'); return; }
 
-  window.location.href = 'mailto:' + encodeURIComponent(email) +
+  // Open email client with pre-filled draft
+  var mailtoLink = 'mailto:' + encodeURIComponent(email) +
     '?subject=' + encodeURIComponent(subject) +
     '&body=' + encodeURIComponent(body);
 
+  window.open(mailtoLink, '_blank');
+
+  // Log to Airtable via server
   var btn = document.getElementById('sendLogBtn');
   btn.disabled = true;
   btn.innerHTML = '<span>Logging...</span>';
@@ -360,12 +316,10 @@ async function sendAndLog() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contactId:    contactId,
-        subject:      subject,
-        body:         body,
-        notes:        notes,
-        senderEmail:  senderEmail,
-        senderUserId: senderUserId
+        contactId: contactId,
+        subject:   subject,
+        body:      body,
+        notes:     notes
       })
     });
     var data = await res.json();
@@ -389,9 +343,6 @@ function discard() {
   if (bod) bod.value = '';
   var not = document.getElementById('notesField');
   if (not) not.value = '';
-  var tag = document.getElementById('appliedTag');
-  if (tag) tag.classList.remove('visible');
-  selectedTemplateId = null;
   var btn = document.getElementById('sendLogBtn');
   btn.className = 'btn-send-log';
   btn.innerHTML = '<span>&#8599; Send &amp; Log</span>';
