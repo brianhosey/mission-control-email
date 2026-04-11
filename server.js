@@ -13,12 +13,15 @@ const INTERACTIONS_TABLE = 'tblnQ3sBBqd1UnO4t';
 
 // ── Interactions field IDs (verified Apr 10 2026) ──────────────────────────
 const F_SUBJECT      = 'fldobLsEfXNvwziFt'; // subject      — singleLineText
-const F_EMAIL_BODY   = 'fldlW7VPi0ft7zWXv'; // emailBody    — richText
+const F_EMAIL_BODY   = 'fldlW7VPi0ft7zWXv'; // emailBody    — multilineText
 const F_CONTACT      = 'fldZezQOhy76qUG9I'; // contact      — multipleRecordLinks → Contacts
 const F_DATE         = 'fldYUUSMlYF7DmgZm'; // date         — dateTime
 const F_TYPE         = 'fld5afjc2wU1eBnXN'; // type         — singleSelect
 const F_NOTES        = 'fldFPj2OK8FktcakJ'; // notes        — multilineText
 const F_SENDER_EMAIL = 'fldeCeoUqDntsgKUZ'; // senderEmail  — email
+const F_CREATED_BY   = 'fld5usEdNQrV9bnw6'; // createdBy    — multipleRecordLinks → Users
+const F_EMAIL_STATUS = 'fldCDdGuAs3TKVr66'; // emailStatus  — singleSelect
+const F_VISIBILITY   = 'fldvLutxnMllVemyG'; // visibility   — singleSelect
 
 // ── GET /templates ─────────────────────────────────────────────────────────
 app.get('/templates', async (req, res) => {
@@ -45,7 +48,7 @@ app.get('/templates', async (req, res) => {
       id:      r.id,
       name:    r.fields['templateName'] || '',
       subject: r.fields['subject']      || '',
-      body:    r.fields['emailBody']    || ''  // field renamed from 'body' to 'emailBody'
+      body:    r.fields['emailBody']    || ''
     })));
 
   } catch (err) {
@@ -63,6 +66,7 @@ app.post('/log', async (req, res) => {
   const body        = String(req.body.body        || '').trim();
   const notes       = String(req.body.notes       || '').trim();
   const senderEmail = String(req.body.senderEmail || '').trim();
+  const senderUserId = String(req.body.senderUserId || '').trim();
 
   if (!contactId.startsWith('rec')) {
     return res.status(400).json({ error: 'Invalid contactId: ' + contactId });
@@ -72,15 +76,20 @@ app.post('/log', async (req, res) => {
   }
 
   const fields = {
-    [F_SUBJECT]: subject,
-    [F_CONTACT]: [contactId],           // plain string array — confirmed working format
-    [F_DATE]:    new Date().toISOString(),
-    [F_TYPE]:    'Email - General'
+    [F_SUBJECT]:      subject,
+    [F_CONTACT]:      [contactId],
+    [F_DATE]:         new Date().toISOString(),
+    [F_TYPE]:         'Email - General',
+    [F_EMAIL_STATUS]: 'Sent',
+    [F_VISIBILITY]:   'Everyone'
   };
 
-  if (body)        fields[F_EMAIL_BODY]   = body;
-  if (notes)       fields[F_NOTES]        = notes;
-  if (senderEmail) fields[F_SENDER_EMAIL] = senderEmail;
+  if (body)         fields[F_EMAIL_BODY]   = body;
+  if (notes)        fields[F_NOTES]        = notes;
+  if (senderEmail)  fields[F_SENDER_EMAIL] = senderEmail;
+  if (senderUserId && senderUserId.startsWith('rec')) {
+    fields[F_CREATED_BY] = [senderUserId];
+  }
 
   console.log('Writing:', JSON.stringify(fields));
 
