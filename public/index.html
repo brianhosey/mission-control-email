@@ -304,7 +304,7 @@ async function sendAndLog() {
     '?subject=' + encodeURIComponent(subject) +
     '&body=' + encodeURIComponent(body);
 
-  window.open(mailtoLink, '_blank');
+  window.parent.location.href = mailtoLink;
 
   // Log to Airtable via server
   var btn = document.getElementById('sendLogBtn');
