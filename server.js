@@ -11,7 +11,7 @@ const BASE_ID            = 'appI5TaR5KnZM0Hst';
 const TEMPLATES_TABLE    = 'tblNQzAYRkPIJ85TM';
 const INTERACTIONS_TABLE = 'tblnQ3sBBqd1UnO4t';
 
-// ── Interactions field IDs (verified Apr 10 2026) ──────────────────────────
+// ── Interactions field IDs ─────────────────────────────────────────────────
 const F_SUBJECT      = 'fldobLsEfXNvwziFt'; // subject      — singleLineText
 const F_EMAIL_BODY   = 'fldlW7VPi0ft7zWXv'; // emailBody    — multilineText
 const F_CONTACT      = 'fldZezQOhy76qUG9I'; // contact      — multipleRecordLinks → Contacts
@@ -43,11 +43,13 @@ app.get('/templates', async (req, res) => {
       return res.status(500).json({ error: 'Failed to fetch templates' });
     }
 
+    // Return templateName, subject, emailBody, and type for each active template
     res.json(data.records.map(r => ({
       id:      r.id,
       name:    r.fields['templateName'] || '',
       subject: r.fields['subject']      || '',
-      body:    r.fields['emailBody']    || ''
+      body:    r.fields['emailBody']    || '',
+      type:    r.fields['type']         || 'Email - General'
     })));
 
   } catch (err) {
@@ -64,6 +66,7 @@ app.post('/log', async (req, res) => {
   const subject      = String(req.body.subject      || '').trim();
   const body         = String(req.body.body         || '').trim();
   const notes        = String(req.body.notes        || '').trim();
+  const interactionType = String(req.body.interactionType || 'Email - General').trim();
   const senderUserId = String(req.body.senderUserId || '').trim();
 
   if (!contactId.startsWith('rec')) {
@@ -77,7 +80,7 @@ app.post('/log', async (req, res) => {
     [F_SUBJECT]:      subject,
     [F_CONTACT]:      [contactId],
     [F_DATE]:         new Date().toISOString(),
-    [F_TYPE]:         'Email - General',
+    [F_TYPE]:         interactionType,
     [F_EMAIL_STATUS]: 'Sent',
     [F_VISIBILITY]:   'Everyone'
   };
@@ -85,11 +88,9 @@ app.post('/log', async (req, res) => {
   if (body)  fields[F_EMAIL_BODY] = body;
   if (notes) fields[F_NOTES]      = notes;
 
-  // Attempt to link createdBy — skip gracefully if ID is invalid
+  // Only attempt createdBy if it looks like a valid Airtable record ID
   if (senderUserId && senderUserId.startsWith('rec')) {
     fields[F_CREATED_BY] = [senderUserId];
-  } else {
-    console.log('senderUserId not a valid rec ID, skipping createdBy:', senderUserId);
   }
 
   console.log('Writing:', JSON.stringify(fields));
@@ -109,35 +110,34 @@ app.post('/log', async (req, res) => {
 
     const data = await response.json();
 
-    if (data.error) {
-      // If createdBy caused the error, retry without it
-      if (data.error.type === 'INVALID_RECORD_ID' && fields[F_CREATED_BY]) {
-        console.log('createdBy failed, retrying without it...');
-        delete fields[F_CREATED_BY];
+    // If createdBy caused an error, retry without it
+    if (data.error && data.error.type === 'INVALID_RECORD_ID' && fields[F_CREATED_BY]) {
+      console.log('createdBy failed, retrying without it...');
+      delete fields[F_CREATED_BY];
 
-        const retry = await fetch(
-          `https://api.airtable.com/v0/${BASE_ID}/${INTERACTIONS_TABLE}`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ fields })
-          }
-        );
-
-        const retryData = await retry.json();
-
-        if (retryData.error) {
-          console.error('Retry also failed:', JSON.stringify(retryData));
-          return res.status(400).json({ error: retryData.error.message || JSON.stringify(retryData.error) });
+      const retry = await fetch(
+        `https://api.airtable.com/v0/${BASE_ID}/${INTERACTIONS_TABLE}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ fields })
         }
+      );
 
-        console.log('Logged (without createdBy):', retryData.id);
-        return res.json({ success: true, recordId: retryData.id, createdByLinked: false });
+      const retryData = await retry.json();
+      if (retryData.error) {
+        console.error('Retry failed:', JSON.stringify(retryData));
+        return res.status(400).json({ error: retryData.error.message || JSON.stringify(retryData.error) });
       }
 
+      console.log('Logged (without createdBy):', retryData.id);
+      return res.json({ success: true, recordId: retryData.id, createdByLinked: false });
+    }
+
+    if (data.error) {
       console.error('Airtable error:', JSON.stringify(data));
       return res.status(400).json({ error: data.error.message || JSON.stringify(data.error) });
     }
