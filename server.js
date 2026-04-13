@@ -82,10 +82,14 @@ app.post('/log', async (req, res) => {
     [F_VISIBILITY]:   'Everyone'
   };
 
-  if (body) fields[F_EMAIL_BODY] = body;
-  if (notes) fields[F_NOTES] = notes;
+  if (body)  fields[F_EMAIL_BODY] = body;
+  if (notes) fields[F_NOTES]      = notes;
+
+  // Attempt to link createdBy — skip gracefully if ID is invalid
   if (senderUserId && senderUserId.startsWith('rec')) {
     fields[F_CREATED_BY] = [senderUserId];
+  } else {
+    console.log('senderUserId not a valid rec ID, skipping createdBy:', senderUserId);
   }
 
   console.log('Writing:', JSON.stringify(fields));
@@ -106,12 +110,40 @@ app.post('/log', async (req, res) => {
     const data = await response.json();
 
     if (data.error) {
+      // If createdBy caused the error, retry without it
+      if (data.error.type === 'INVALID_RECORD_ID' && fields[F_CREATED_BY]) {
+        console.log('createdBy failed, retrying without it...');
+        delete fields[F_CREATED_BY];
+
+        const retry = await fetch(
+          `https://api.airtable.com/v0/${BASE_ID}/${INTERACTIONS_TABLE}`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ fields })
+          }
+        );
+
+        const retryData = await retry.json();
+
+        if (retryData.error) {
+          console.error('Retry also failed:', JSON.stringify(retryData));
+          return res.status(400).json({ error: retryData.error.message || JSON.stringify(retryData.error) });
+        }
+
+        console.log('Logged (without createdBy):', retryData.id);
+        return res.json({ success: true, recordId: retryData.id, createdByLinked: false });
+      }
+
       console.error('Airtable error:', JSON.stringify(data));
       return res.status(400).json({ error: data.error.message || JSON.stringify(data.error) });
     }
 
     console.log('Logged:', data.id);
-    res.json({ success: true, recordId: data.id });
+    res.json({ success: true, recordId: data.id, createdByLinked: !!fields[F_CREATED_BY] });
 
   } catch (err) {
     console.error('Unexpected error:', err);
