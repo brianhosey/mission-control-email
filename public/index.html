@@ -128,12 +128,16 @@ textarea.notes {
   gap: 8px;
   flex-shrink: 0;
 }
-.btn-send-log {
-  width: 100%;
+.btn-row {
+  display: flex;
+  gap: 8px;
+}
+.btn-outlook {
+  flex: 1;
   background: #0071E3;
   border: none;
   border-radius: 980px;
-  padding: 10px 20px;
+  padding: 10px 14px;
   font-family: -apple-system, 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
   font-size: 13px;
   font-weight: 500;
@@ -142,18 +146,35 @@ textarea.notes {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 6px;
 }
-.btn-send-log span { color: #FFFFFF; }
-.btn-send-log:hover { opacity: 0.85; }
-.btn-send-log.success { background: #34C759; }
-.btn-send-log:disabled { opacity: 0.4; cursor: default; }
-.footer-row {
+.btn-outlook span { color: #FFFFFF; }
+.btn-outlook:hover { opacity: 0.85; }
+.btn-outlook:disabled { opacity: 0.4; cursor: default; }
+.btn-outlook.sent { background: #3A3A3C; }
+
+.btn-log {
+  flex: 1;
+  background: #FFFFFF;
+  border: 1px solid #D2D2D7;
+  border-radius: 980px;
+  padding: 10px 14px;
+  font-family: -apple-system, 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
   display: flex;
   align-items: center;
-  gap: 6px;
   justify-content: center;
+  gap: 6px;
+  color: #1D1D1F;
 }
+.btn-log:hover { background: #F5F5F7; }
+.btn-log:disabled { opacity: 0.4; cursor: default; }
+.btn-log.success { background: #34C759; border-color: #34C759; }
+.btn-log.success span { color: #FFFFFF; }
+
 .footer-hint {
   font-size: 11px;
   color: #AEAEB2;
@@ -161,22 +182,7 @@ textarea.notes {
 }
 .footer-hint.success { color: #34C759; }
 .footer-hint.error { color: #FF3B30; }
-.footer-divider {
-  width: 1px;
-  height: 10px;
-  background: #D2D2D7;
-  flex-shrink: 0;
-}
-.btn-discard {
-  background: none;
-  border: none;
-  font-family: -apple-system, 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-  font-size: 11px;
-  color: #AEAEB2;
-  padding: 0;
-  cursor: pointer;
-}
-.btn-discard:hover { color: #6E6E73; }
+
 .loading {
   padding: 40px 18px;
   text-align: center;
@@ -199,14 +205,15 @@ textarea.notes {
   </div>
 
   <div class="drawer-footer">
-    <button class="btn-send-log" id="sendLogBtn" onclick="sendAndLog()" disabled>
-      <span>&#8599; Send &amp; Log</span>
-    </button>
-    <div class="footer-row">
-      <div class="footer-hint" id="footerHint">Opens a draft in Outlook and logs this email.</div>
-      <div class="footer-divider"></div>
-      <button class="btn-discard" onclick="discard()">Discard</button>
+    <div class="btn-row">
+      <button class="btn-outlook" id="outlookBtn" onclick="openOutlook()" disabled>
+        <span>↗ Open in Outlook</span>
+      </button>
+      <button class="btn-log" id="logBtn" onclick="logInteraction()" disabled>
+        <span>✓ Log Interaction</span>
+      </button>
     </div>
+    <div class="footer-hint" id="footerHint">Select a template to get started.</div>
   </div>
 </div>
 
@@ -218,8 +225,10 @@ var lastName     = params.get('lastName')     || '';
 var company      = params.get('company')      || '';
 var email        = params.get('email')        || '';
 var senderName   = params.get('senderName')   || '';
+var senderUserId = params.get('senderUserId') || '';
 
 var templates = [];
+var emailOpened = false;
 
 function resolveMerge(text) {
   return text
@@ -256,7 +265,6 @@ function renderForm() {
       '<textarea class="notes" id="notesField" rows="2" placeholder="Optional \u2014 add context for your records..."></textarea>' +
     '</div>';
 
-  document.getElementById('sendLogBtn').disabled = !email;
   if (!email) setHint('This contact has no email address on file.', 'error');
 }
 
@@ -275,79 +283,94 @@ async function loadTemplates() {
 
 function applyTemplate() {
   var key = document.getElementById('templateSelect').value;
+  var outlookBtn = document.getElementById('outlookBtn');
+  var logBtn = document.getElementById('logBtn');
+
   if (!key) {
     document.getElementById('subjectField').value = '';
     document.getElementById('bodyField').value = '';
-    setHint('Opens a draft in Outlook and logs this email.');
+    outlookBtn.disabled = true;
+    logBtn.disabled = true;
+    setHint('Select a template to get started.');
     return;
   }
+
   var t = null;
   for (var i = 0; i < templates.length; i++) {
     if (templates[i].id === key) { t = templates[i]; break; }
   }
   if (!t) return;
+
   document.getElementById('subjectField').value = resolveMerge(t.subject);
   document.getElementById('bodyField').value = resolveMerge(t.body);
-  setHint('Edit the draft, then click Send & Log.');
+
+  outlookBtn.disabled = !email;
+  logBtn.disabled = false;
+  setHint('Edit the draft, then open in Outlook. Log after sending.');
 }
 
-async function sendAndLog() {
+function openOutlook() {
   var subject = document.getElementById('subjectField').value.trim();
   var body    = document.getElementById('bodyField').value.trim();
-  var notes   = document.getElementById('notesField').value.trim();
 
-  if (!subject) { setHint('Please add a subject before sending.', 'error'); return; }
-  if (!contactId) { setHint('No contact ID found. Cannot log.', 'error'); return; }
+  if (!subject) { setHint('Please add a subject before opening Outlook.', 'error'); return; }
 
-  // Open email client with pre-filled draft
   var mailtoLink = 'mailto:' + encodeURIComponent(email) +
     '?subject=' + encodeURIComponent(subject) +
     '&body=' + encodeURIComponent(body);
 
-  var a = document.createElement('a'); a.href = mailtoLink; a.target = '_top'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  // Try multiple approaches to fire mailto from inside a browser/tab
+  var a = document.createElement('a');
+  a.href = mailtoLink;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
-  // Log to Airtable via server
-  var btn = document.getElementById('sendLogBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span>Logging...</span>';
+  emailOpened = true;
+  var btn = document.getElementById('outlookBtn');
+  btn.classList.add('sent');
+  btn.innerHTML = '<span>✓ Opened in Outlook</span>';
+  setHint('Return here after sending to log the interaction.');
+}
+
+async function logInteraction() {
+  var subject = document.getElementById('subjectField').value.trim();
+  var body    = document.getElementById('bodyField').value.trim();
+  var notes   = document.getElementById('notesField').value.trim();
+
+  if (!subject) { setHint('Please add a subject before logging.', 'error'); return; }
+  if (!contactId) { setHint('No contact ID found. Cannot log.', 'error'); return; }
+
+  var logBtn = document.getElementById('logBtn');
+  logBtn.disabled = true;
+  logBtn.innerHTML = '<span>Logging...</span>';
 
   try {
     var res = await fetch('/log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contactId: contactId,
-        subject:   subject,
-        body:      body,
-        notes:     notes
+        contactId:    contactId,
+        subject:      subject,
+        body:         body,
+        notes:        notes,
+        senderUserId: senderUserId
       })
     });
     var data = await res.json();
     if (data.error) throw new Error(data.error);
-    btn.className = 'btn-send-log success';
-    btn.innerHTML = '<span>&#10003; Logged</span>';
-    setHint('Outlook opened and email logged to Interaction History.', 'success');
+
+    logBtn.className = 'btn-log success';
+    logBtn.innerHTML = '<span>✓ Logged</span>';
+    setHint('Interaction logged successfully.', 'success');
+
   } catch (err) {
-    btn.disabled = false;
-    btn.innerHTML = '<span>&#8599; Send &amp; Log</span>';
+    logBtn.disabled = false;
+    logBtn.innerHTML = '<span>✓ Log Interaction</span>';
     setHint('Logging failed \u2014 please try again.', 'error');
   }
-}
-
-function discard() {
-  var sel = document.getElementById('templateSelect');
-  if (sel) sel.value = '';
-  var sub = document.getElementById('subjectField');
-  if (sub) sub.value = '';
-  var bod = document.getElementById('bodyField');
-  if (bod) bod.value = '';
-  var not = document.getElementById('notesField');
-  if (not) not.value = '';
-  var btn = document.getElementById('sendLogBtn');
-  btn.className = 'btn-send-log';
-  btn.innerHTML = '<span>&#8599; Send &amp; Log</span>';
-  btn.disabled = !email;
-  setHint('Opens a draft in Outlook and logs this email.');
 }
 
 function setHint(msg, type) {
