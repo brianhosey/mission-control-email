@@ -14,203 +14,86 @@
   -webkit-font-smoothing: antialiased;
   color: #1D1D1F;
 }
-html, body {
-  height: 100%;
-  background: #FFFFFF;
-}
-.drawer {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: #FFFFFF;
-}
+html, body { height: 100%; background: #FFFFFF; }
+.drawer { display: flex; flex-direction: column; height: 100vh; background: #FFFFFF; }
 .drawer-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  flex: 1; overflow-y: auto; padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 14px;
 }
 .drawer-body::-webkit-scrollbar { width: 4px; }
 .drawer-body::-webkit-scrollbar-thumb { background: #C7C7CC; border-radius: 4px; }
-.field-block {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.field-label {
-  font-size: 11px;
-  font-weight: 500;
-  color: #6E6E73;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
+.field-block { display: flex; flex-direction: column; gap: 5px; }
+.field-label { font-size: 11px; font-weight: 500; color: #6E6E73; text-transform: uppercase; letter-spacing: 0.05em; }
 select {
   font-family: -apple-system, 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  color: #1D1D1F;
-  background-color: #FFFFFF;
-  border: 1px solid #D2D2D7;
-  border-radius: 8px;
-  padding: 8px 30px 8px 11px;
-  width: 100%;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
+  font-size: 13px; font-weight: 400; color: #1D1D1F; background-color: #FFFFFF;
+  border: 1px solid #D2D2D7; border-radius: 8px; padding: 8px 30px 8px 11px;
+  width: 100%; outline: none; appearance: none; -webkit-appearance: none; cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23AEAEB2' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 11px center;
+  background-repeat: no-repeat; background-position: right 11px center;
 }
-select:focus {
-  border-color: #0071E3;
-  box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
-}
-select option {
-  color: #1D1D1F;
-  background-color: #FFFFFF;
-  font-size: 13px;
-}
+select:focus { border-color: #0071E3; box-shadow: 0 0 0 3px rgba(0,113,227,0.15); }
+select option { color: #1D1D1F; background-color: #FFFFFF; font-size: 13px; }
 input[type="text"] {
   font-family: -apple-system, 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  color: #1D1D1F;
-  background-color: #FFFFFF;
-  border: 1px solid #D2D2D7;
-  border-radius: 8px;
-  padding: 8px 11px;
-  width: 100%;
-  outline: none;
+  font-size: 13px; font-weight: 400; color: #1D1D1F; background-color: #FFFFFF;
+  border: 1px solid #D2D2D7; border-radius: 8px; padding: 8px 11px; width: 100%; outline: none;
 }
-input[type="text"]:focus {
-  border-color: #0071E3;
-  box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
-}
+input[type="text"]:focus { border-color: #0071E3; box-shadow: 0 0 0 3px rgba(0,113,227,0.15); }
 textarea {
   font-family: -apple-system, 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  color: #1D1D1F;
-  background-color: #FFFFFF;
-  border: 1px solid #D2D2D7;
-  border-radius: 8px;
-  padding: 8px 11px;
-  width: 100%;
-  outline: none;
-  resize: none;
-  line-height: 1.65;
+  font-size: 13px; font-weight: 400; color: #1D1D1F; background-color: #FFFFFF;
+  border: 1px solid #D2D2D7; border-radius: 8px; padding: 8px 11px;
+  width: 100%; outline: none; resize: none; line-height: 1.65;
 }
-textarea:focus {
-  border-color: #0071E3;
-  box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
-}
-textarea.notes {
-  background-color: #F5F5F7;
-  border-color: #E5E5E5;
-}
-::placeholder {
-  color: #C7C7CC;
-  font-style: italic;
-}
-.rule {
-  height: 1px;
-  background: #F2F2F7;
-  margin: 0 -18px;
-}
+textarea:focus { border-color: #0071E3; box-shadow: 0 0 0 3px rgba(0,113,227,0.15); }
+textarea.notes { background-color: #F5F5F7; border-color: #E5E5E5; }
+::placeholder { color: #C7C7CC; font-style: italic; }
+.rule { height: 1px; background: #F2F2F7; margin: 0 -18px; }
 .drawer-footer {
-  padding: 14px 18px;
-  border-top: 1px solid #F2F2F7;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
+  padding: 14px 18px; border-top: 1px solid #F2F2F7;
+  display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;
 }
-.btn-row {
-  display: flex;
-  gap: 8px;
-}
+.btn-row { display: flex; gap: 8px; }
 .btn-outlook {
-  flex: 1;
-  background: #0071E3;
-  border: none;
-  border-radius: 980px;
-  padding: 10px 14px;
-  font-family: -apple-system, 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  flex: 1; background: #0071E3; border: none; border-radius: 980px;
+  padding: 10px 14px; font-family: inherit; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: opacity 0.15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .btn-outlook span { color: #FFFFFF; }
 .btn-outlook:hover { opacity: 0.85; }
 .btn-outlook:disabled { opacity: 0.4; cursor: default; }
 .btn-outlook.sent { background: #3A3A3C; }
-
 .btn-log {
-  flex: 1;
-  background: #FFFFFF;
-  border: 1px solid #D2D2D7;
-  border-radius: 980px;
-  padding: 10px 14px;
-  font-family: -apple-system, 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  color: #1D1D1F;
+  flex: 1; background: #FFFFFF; border: 1px solid #D2D2D7; border-radius: 980px;
+  padding: 10px 14px; font-family: inherit; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; color: #1D1D1F;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 .btn-log:hover { background: #F5F5F7; }
 .btn-log:disabled { opacity: 0.4; cursor: default; }
 .btn-log.success { background: #34C759; border-color: #34C759; }
 .btn-log.success span { color: #FFFFFF; }
-
-.footer-hint {
-  font-size: 11px;
-  color: #AEAEB2;
-  text-align: center;
-}
+.footer-hint { font-size: 11px; color: #AEAEB2; text-align: center; }
 .footer-hint.success { color: #34C759; }
 .footer-hint.error { color: #FF3B30; }
-
-.loading {
-  padding: 40px 18px;
-  text-align: center;
-  font-size: 13px;
-  color: #AEAEB2;
-}
-.error-state {
-  padding: 40px 18px;
-  text-align: center;
-  font-size: 13px;
-  color: #FF3B30;
-}
+.loading { padding: 40px 18px; text-align: center; font-size: 13px; color: #AEAEB2; }
+.error-state { padding: 40px 18px; text-align: center; font-size: 13px; color: #FF3B30; }
 </style>
 </head>
 <body>
-
 <div class="drawer">
   <div class="drawer-body" id="drawerBody">
     <div class="loading">Loading templates...</div>
   </div>
-
   <div class="drawer-footer">
     <div class="btn-row">
       <button class="btn-outlook" id="outlookBtn" onclick="openOutlook()" disabled>
-        <span>↗ Open in Outlook</span>
+        <span>&#8599; Open in Outlook</span>
       </button>
       <button class="btn-log" id="logBtn" onclick="logInteraction()" disabled>
-        <span>✓ Log Interaction</span>
+        <span>&#10003; Log Interaction</span>
       </button>
     </div>
     <div class="footer-hint" id="footerHint">Select a template to get started.</div>
@@ -218,17 +101,20 @@ textarea.notes {
 </div>
 
 <script>
-var params       = new URLSearchParams(window.location.search);
-var contactId    = params.get('contactId')    || '';
-var firstName    = params.get('firstName')    || '';
-var lastName     = params.get('lastName')     || '';
-var company      = params.get('company')      || '';
-var email        = params.get('email')        || '';
-var senderName   = params.get('senderName')   || '';
-var senderUserId = params.get('senderUserId') || '';
+var params          = new URLSearchParams(window.location.search);
+var contactId       = params.get('contactId')    || '';
+var firstName       = params.get('firstName')    || '';
+var lastName        = params.get('lastName')     || '';
+var company         = params.get('company')      || '';
+var email           = params.get('email')        || '';
+var senderName      = params.get('senderName')   || '';
+// senderUserId should be the Airtable Users table record ID
+// For Brian Hosey this is rec8Mgs1pUoDgSH7T
+// Pass this via the Noloco URL using the logged-in user's Airtable record ID
+var senderUserId    = params.get('senderUserId') || '';
 
 var templates = [];
-var emailOpened = false;
+var selectedType = 'Email - General';
 
 function resolveMerge(text) {
   return text
@@ -243,28 +129,18 @@ function renderForm() {
   var options = '<option value="" style="color:#C7C7CC;">\u2014 Select a template \u2014</option>';
   for (var i = 0; i < templates.length; i++) {
     var t = templates[i];
-    options += '<option value="' + t.id + '" style="color:#1D1D1F;background-color:#FFFFFF;">' + t.name + '</option>';
+    options += '<option value="' + t.id + '">' + t.name + '</option>';
   }
-
   document.getElementById('drawerBody').innerHTML =
-    '<div class="field-block">' +
-      '<div class="field-label">Template</div>' +
-      '<select id="templateSelect" onchange="applyTemplate()">' + options + '</select>' +
-    '</div>' +
+    '<div class="field-block"><div class="field-label">Template</div>' +
+    '<select id="templateSelect" onchange="applyTemplate()">' + options + '</select></div>' +
     '<div class="rule"></div>' +
-    '<div class="field-block">' +
-      '<div class="field-label">Subject</div>' +
-      '<input type="text" id="subjectField" placeholder="Select a template to populate...">' +
-    '</div>' +
-    '<div class="field-block">' +
-      '<div class="field-label">Body</div>' +
-      '<textarea id="bodyField" rows="10" placeholder="Select a template to populate..."></textarea>' +
-    '</div>' +
-    '<div class="field-block">' +
-      '<div class="field-label">Internal Notes</div>' +
-      '<textarea class="notes" id="notesField" rows="2" placeholder="Optional \u2014 add context for your records..."></textarea>' +
-    '</div>';
-
+    '<div class="field-block"><div class="field-label">Subject</div>' +
+    '<input type="text" id="subjectField" placeholder="Select a template to populate..."></div>' +
+    '<div class="field-block"><div class="field-label">Body</div>' +
+    '<textarea id="bodyField" rows="10" placeholder="Select a template to populate..."></textarea></div>' +
+    '<div class="field-block"><div class="field-label">Internal Notes</div>' +
+    '<textarea class="notes" id="notesField" rows="2" placeholder="Optional \u2014 add context for your records..."></textarea></div>';
   if (!email) setHint('This contact has no email address on file.', 'error');
 }
 
@@ -285,25 +161,23 @@ function applyTemplate() {
   var key = document.getElementById('templateSelect').value;
   var outlookBtn = document.getElementById('outlookBtn');
   var logBtn = document.getElementById('logBtn');
-
   if (!key) {
     document.getElementById('subjectField').value = '';
     document.getElementById('bodyField').value = '';
     outlookBtn.disabled = true;
     logBtn.disabled = true;
+    selectedType = 'Email - General';
     setHint('Select a template to get started.');
     return;
   }
-
   var t = null;
   for (var i = 0; i < templates.length; i++) {
     if (templates[i].id === key) { t = templates[i]; break; }
   }
   if (!t) return;
-
+  selectedType = t.type || 'Email - General';
   document.getElementById('subjectField').value = resolveMerge(t.subject);
   document.getElementById('bodyField').value = resolveMerge(t.body);
-
   outlookBtn.disabled = !email;
   logBtn.disabled = false;
   setHint('Edit the draft, then open in Outlook. Log after sending.');
@@ -312,14 +186,10 @@ function applyTemplate() {
 function openOutlook() {
   var subject = document.getElementById('subjectField').value.trim();
   var body    = document.getElementById('bodyField').value.trim();
-
   if (!subject) { setHint('Please add a subject before opening Outlook.', 'error'); return; }
-
   var mailtoLink = 'mailto:' + encodeURIComponent(email) +
     '?subject=' + encodeURIComponent(subject) +
     '&body=' + encodeURIComponent(body);
-
-  // Try multiple approaches to fire mailto from inside a browser/tab
   var a = document.createElement('a');
   a.href = mailtoLink;
   a.target = '_blank';
@@ -327,11 +197,9 @@ function openOutlook() {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-
-  emailOpened = true;
   var btn = document.getElementById('outlookBtn');
   btn.classList.add('sent');
-  btn.innerHTML = '<span>✓ Opened in Outlook</span>';
+  btn.innerHTML = '<span>&#10003; Opened in Outlook</span>';
   setHint('Return here after sending to log the interaction.');
 }
 
@@ -339,36 +207,32 @@ async function logInteraction() {
   var subject = document.getElementById('subjectField').value.trim();
   var body    = document.getElementById('bodyField').value.trim();
   var notes   = document.getElementById('notesField').value.trim();
-
   if (!subject) { setHint('Please add a subject before logging.', 'error'); return; }
   if (!contactId) { setHint('No contact ID found. Cannot log.', 'error'); return; }
-
   var logBtn = document.getElementById('logBtn');
   logBtn.disabled = true;
   logBtn.innerHTML = '<span>Logging...</span>';
-
   try {
     var res = await fetch('/log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contactId:    contactId,
-        subject:      subject,
-        body:         body,
-        notes:        notes,
-        senderUserId: senderUserId
+        contactId:       contactId,
+        subject:         subject,
+        body:            body,
+        notes:           notes,
+        interactionType: selectedType,
+        senderUserId:    senderUserId
       })
     });
     var data = await res.json();
     if (data.error) throw new Error(data.error);
-
     logBtn.className = 'btn-log success';
-    logBtn.innerHTML = '<span>✓ Logged</span>';
+    logBtn.innerHTML = '<span>&#10003; Logged</span>';
     setHint('Interaction logged successfully.', 'success');
-
   } catch (err) {
     logBtn.disabled = false;
-    logBtn.innerHTML = '<span>✓ Log Interaction</span>';
+    logBtn.innerHTML = '<span>&#10003; Log Interaction</span>';
     setHint('Logging failed \u2014 please try again.', 'error');
   }
 }
