@@ -108,13 +108,13 @@ var lastName        = params.get('lastName')     || '';
 var company         = params.get('company')      || '';
 var email           = params.get('email')        || '';
 var senderName      = params.get('senderName')   || '';
-// senderUserId should be the Airtable Users table record ID
-// For Brian Hosey this is rec8Mgs1pUoDgSH7T
-// Pass this via the Noloco URL using the logged-in user's Airtable record ID
 var senderUserId    = params.get('senderUserId') || '';
 
 var templates = [];
 var selectedType = 'Email - General';
+
+// Base URL for Noloco Interaction record pages
+var NOLOCO_BASE = 'https://missioncontrol.hoseyapp.com/interactions/view/';
 
 function resolveMerge(text) {
   return text
@@ -209,9 +209,11 @@ async function logInteraction() {
   var notes   = document.getElementById('notesField').value.trim();
   if (!subject) { setHint('Please add a subject before logging.', 'error'); return; }
   if (!contactId) { setHint('No contact ID found. Cannot log.', 'error'); return; }
+
   var logBtn = document.getElementById('logBtn');
   logBtn.disabled = true;
   logBtn.innerHTML = '<span>Logging...</span>';
+
   try {
     var res = await fetch('/log', {
       method: 'POST',
@@ -227,9 +229,17 @@ async function logInteraction() {
     });
     var data = await res.json();
     if (data.error) throw new Error(data.error);
+
     logBtn.className = 'btn-log success';
     logBtn.innerHTML = '<span>&#10003; Logged</span>';
-    setHint('Interaction logged successfully.', 'success');
+    setHint('Redirecting to interaction record...', 'success');
+
+    // Redirect to the Noloco Interaction record page after a short delay
+    // so the user can see the success confirmation before being navigated away
+    setTimeout(function() {
+      window.location.href = NOLOCO_BASE + data.recordId + '/details';
+    }, 1500);
+
   } catch (err) {
     logBtn.disabled = false;
     logBtn.innerHTML = '<span>&#10003; Log Interaction</span>';
