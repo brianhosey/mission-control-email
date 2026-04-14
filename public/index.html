@@ -237,7 +237,7 @@ async function logInteraction() {
     // Redirect to the Noloco Interaction record page after a short delay
     // so the user can see the success confirmation before being navigated away
     setTimeout(function() {
-      window.location.href = NOLOCO_BASE + data.recordId + '/details';
+      window.top.location.href = NOLOCO_BASE + data.recordId + '/details';
     }, 1500);
 
   } catch (err) {
