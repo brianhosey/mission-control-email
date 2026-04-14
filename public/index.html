@@ -108,7 +108,7 @@ var lastName        = params.get('lastName')     || '';
 var company         = params.get('company')      || '';
 var email           = params.get('email')        || '';
 var senderName      = params.get('senderName')   || '';
-var senderUserId    = params.get('senderUserId') || '';
+var senderEmail     = params.get('senderEmail')  || '';
 
 var templates = [];
 var selectedType = 'Email - General';
@@ -224,7 +224,7 @@ async function logInteraction() {
         body:            body,
         notes:           notes,
         interactionType: selectedType,
-        senderUserId:    senderUserId
+        senderEmail:     senderEmail
       })
     });
     var data = await res.json();
@@ -232,13 +232,7 @@ async function logInteraction() {
 
     logBtn.className = 'btn-log success';
     logBtn.innerHTML = '<span>&#10003; Logged</span>';
-    setHint('Redirecting to interaction record...', 'success');
-
-    // Redirect to the Noloco Interaction record page after a short delay
-    // so the user can see the success confirmation before being navigated away
-    setTimeout(function() {
-      window.top.location.href = NOLOCO_BASE + data.recordId + '/details';
-    }, 1500);
+    setHint('Interaction logged successfully.', 'success');
 
   } catch (err) {
     logBtn.disabled = false;
