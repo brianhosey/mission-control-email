@@ -10,7 +10,6 @@ const AIRTABLE_API_KEY   = process.env.AIRTABLE_API_KEY;
 const BASE_ID            = 'appI5TaR5KnZM0Hst';
 const TEMPLATES_TABLE    = 'tblNQzAYRkPIJ85TM';
 const INTERACTIONS_TABLE = 'tblnQ3sBBqd1UnO4t';
-const USERS_TABLE        = 'tblxCSixNOmRkeLxe';
 
 // ── Interactions field IDs ─────────────────────────────────────────────────
 const F_SUBJECT      = 'fldobLsEfXNvwziFt';
@@ -22,32 +21,6 @@ const F_NOTES        = 'fldFPj2OK8FktcakJ';
 const F_CREATED_BY   = 'fld5usEdNQrV9bnw6';
 const F_EMAIL_STATUS = 'fldCDdGuAs3TKVr66';
 const F_VISIBILITY   = 'fldvLutxnMllVemyG';
-
-// ── Look up Airtable Users record ID by email ──────────────────────────────
-async function getUserRecordId(email) {
-  if (!email) return null;
-  try {
-    const params = new URLSearchParams({
-      filterByFormula: `{emailAddress}="${email}"`,
-      maxRecords: 1,
-      fields: ['emailAddress']
-    });
-    const response = await fetch(
-      `https://api.airtable.com/v0/${BASE_ID}/${USERS_TABLE}?${params}`,
-      { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` } }
-    );
-    const data = await response.json();
-    if (data.records && data.records.length > 0) {
-      console.log(`Resolved user email ${email} → ${data.records[0].id}`);
-      return data.records[0].id;
-    }
-    console.log(`No Users record found for email: ${email}`);
-    return null;
-  } catch (err) {
-    console.error('User lookup error:', err);
-    return null;
-  }
-}
 
 // ── GET /templates ─────────────────────────────────────────────────────────
 app.get('/templates', async (req, res) => {
@@ -92,7 +65,7 @@ app.post('/log', async (req, res) => {
   const body            = String(req.body.body            || '').trim();
   const notes           = String(req.body.notes           || '').trim();
   const interactionType = String(req.body.interactionType || 'Email - General').trim();
-  const senderEmail     = String(req.body.senderEmail     || '').trim();
+  const senderUserId    = String(req.body.senderUserId    || '').trim();
 
   if (!contactId.startsWith('rec')) {
     return res.status(400).json({ error: 'Invalid contactId: ' + contactId });
@@ -100,9 +73,6 @@ app.post('/log', async (req, res) => {
   if (!subject) {
     return res.status(400).json({ error: 'Subject is required' });
   }
-
-  // Look up the Airtable Users record ID from the sender's email
-  const airtableUserId = await getUserRecordId(senderEmail);
 
   const fields = {
     [F_SUBJECT]:      subject,
@@ -113,9 +83,14 @@ app.post('/log', async (req, res) => {
     [F_VISIBILITY]:   'Everyone'
   };
 
-  if (body)            fields[F_EMAIL_BODY] = body;
-  if (notes)           fields[F_NOTES]      = notes;
-  if (airtableUserId)  fields[F_CREATED_BY] = [airtableUserId];
+  if (body)          fields[F_EMAIL_BODY] = body;
+  if (notes)         fields[F_NOTES]      = notes;
+  if (senderUserId && senderUserId.startsWith('rec')) {
+    fields[F_CREATED_BY] = [senderUserId];
+    console.log('createdBy:', senderUserId);
+  } else {
+    console.log('No valid senderUserId received:', senderUserId);
+  }
 
   console.log('Writing:', JSON.stringify(fields));
 
@@ -134,36 +109,37 @@ app.post('/log', async (req, res) => {
 
     const data = await response.json();
 
-    if (data.error) {
-      // If createdBy caused the error, retry without it
-      if (data.error.type === 'INVALID_RECORD_ID' && fields[F_CREATED_BY]) {
-        console.log('createdBy failed, retrying without it...');
-        delete fields[F_CREATED_BY];
-        const retry = await fetch(
-          `https://api.airtable.com/v0/${BASE_ID}/${INTERACTIONS_TABLE}`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${AIRTABLE_API_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ fields })
-          }
-        );
-        const retryData = await retry.json();
-        if (retryData.error) {
-          console.error('Retry failed:', JSON.stringify(retryData));
-          return res.status(400).json({ error: retryData.error.message || JSON.stringify(retryData.error) });
+    // If createdBy caused the error, retry without it
+    if (data.error && data.error.type === 'INVALID_RECORD_ID' && fields[F_CREATED_BY]) {
+      console.log('createdBy failed, retrying without it...');
+      delete fields[F_CREATED_BY];
+      const retry = await fetch(
+        `https://api.airtable.com/v0/${BASE_ID}/${INTERACTIONS_TABLE}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ fields })
         }
-        console.log('Logged (without createdBy):', retryData.id);
-        return res.json({ success: true, recordId: retryData.id, createdByLinked: false });
+      );
+      const retryData = await retry.json();
+      if (retryData.error) {
+        console.error('Retry failed:', JSON.stringify(retryData));
+        return res.status(400).json({ error: retryData.error.message || JSON.stringify(retryData.error) });
       }
+      console.log('Logged (without createdBy):', retryData.id);
+      return res.json({ success: true, recordId: retryData.id, createdByLinked: false });
+    }
+
+    if (data.error) {
       console.error('Airtable error:', JSON.stringify(data));
       return res.status(400).json({ error: data.error.message || JSON.stringify(data.error) });
     }
 
-    console.log('Logged:', data.id, '| createdBy:', airtableUserId || 'not linked');
-    res.json({ success: true, recordId: data.id, createdByLinked: !!airtableUserId });
+    console.log('Logged:', data.id, '| createdBy linked:', !!fields[F_CREATED_BY]);
+    res.json({ success: true, recordId: data.id, createdByLinked: !!fields[F_CREATED_BY] });
 
   } catch (err) {
     console.error('Unexpected error:', err);
