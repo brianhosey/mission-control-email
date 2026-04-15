@@ -7,12 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  box-sizing: border-box; margin: 0; padding: 0;
   font-family: -apple-system, 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  color: #1D1D1F;
+  -webkit-font-smoothing: antialiased; color: #1D1D1F;
 }
 html, body { height: 100%; background: #FFFFFF; }
 .drawer { display: flex; flex-direction: column; height: 100vh; background: #FFFFFF; }
@@ -108,13 +105,10 @@ var lastName        = params.get('lastName')     || '';
 var company         = params.get('company')      || '';
 var email           = params.get('email')        || '';
 var senderName      = params.get('senderName')   || '';
-var senderEmail     = params.get('senderEmail')  || '';
+var senderUserId    = params.get('senderUserId') || ''; // Pass {{loggedInUser.id}} from Noloco
 
-var templates = [];
+var templates    = [];
 var selectedType = 'Email - General';
-
-// Base URL for Noloco Interaction record pages
-var NOLOCO_BASE = 'https://missioncontrol.hoseyapp.com/interactions/view/';
 
 function resolveMerge(text) {
   return text
@@ -224,16 +218,14 @@ async function logInteraction() {
         body:            body,
         notes:           notes,
         interactionType: selectedType,
-        senderEmail:     senderEmail
+        senderUserId:    senderUserId
       })
     });
     var data = await res.json();
     if (data.error) throw new Error(data.error);
-
     logBtn.className = 'btn-log success';
     logBtn.innerHTML = '<span>&#10003; Logged</span>';
     setHint('Interaction logged successfully.', 'success');
-
   } catch (err) {
     logBtn.disabled = false;
     logBtn.innerHTML = '<span>&#10003; Log Interaction</span>';
