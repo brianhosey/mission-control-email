@@ -105,13 +105,16 @@ var contactId       = params.get('contactId')       || '';
 var firstName       = params.get('firstName')       || '';
 var lastName        = params.get('lastName')        || '';
 var company         = params.get('company')         || '';
-var email           = params.get('email')           || '';
+var email           = (params.get('email')           || '').trim().replace(/^\[|\]$/g, '').trim();
 var senderName      = params.get('senderName')      || '';
 var senderUserId    = params.get('senderUserId')    || '';
 var regionalOffice  = params.get('regionalOffice')  || '';
 
 var templates    = [];
 var selectedType = 'Email - General';
+
+console.log('email param received:', JSON.stringify(params.get('email')));
+console.log('email after clean:', JSON.stringify(email));
 
 function resolveMerge(text) {
   return text
