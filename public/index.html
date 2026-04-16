@@ -17,12 +17,11 @@ html, body { height: 100%; background: #FFFFFF; }
   flex: 1; overflow-y: auto; padding: 16px 18px;
   display: flex; flex-direction: column; gap: 14px;
 }
-#bodyField { flex: 1; min-height: 160px; }
-.field-block.grow { flex: 1; display: flex; flex-direction: column; }
-.field-block.grow textarea { flex: 1; }
 .drawer-body::-webkit-scrollbar { width: 4px; }
 .drawer-body::-webkit-scrollbar-thumb { background: #C7C7CC; border-radius: 4px; }
 .field-block { display: flex; flex-direction: column; gap: 5px; }
+.field-block.grow { flex: 1; display: flex; flex-direction: column; }
+.field-block.grow textarea { flex: 1; }
 .field-label { font-size: 11px; font-weight: 500; color: #6E6E73; text-transform: uppercase; letter-spacing: 0.05em; }
 select {
   font-family: -apple-system, 'SF Pro Text', 'Inter', 'Helvetica Neue', sans-serif;
@@ -102,13 +101,14 @@ textarea.notes { background-color: #F5F5F7; border-color: #E5E5E5; }
 
 <script>
 var params          = new URLSearchParams(window.location.search);
-var contactId       = params.get('contactId')    || '';
-var firstName       = params.get('firstName')    || '';
-var lastName        = params.get('lastName')     || '';
-var company         = params.get('company')      || '';
-var email           = params.get('email')        || '';
-var senderName      = params.get('senderName')   || '';
-var senderUserId    = params.get('senderUserId') || ''; // Pass {{loggedInUser.id}} from Noloco
+var contactId       = params.get('contactId')       || '';
+var firstName       = params.get('firstName')       || '';
+var lastName        = params.get('lastName')        || '';
+var company         = params.get('company')         || '';
+var email           = params.get('email')           || '';
+var senderName      = params.get('senderName')      || '';
+var senderUserId    = params.get('senderUserId')    || '';
+var regionalOffice  = params.get('regionalOffice')  || '';
 
 var templates    = [];
 var selectedType = 'Email - General';
@@ -119,7 +119,8 @@ function resolveMerge(text) {
     .replace(/\{\{lastName\}\}/g, lastName)
     .replace(/\{\{fullName\}\}/g, (firstName + ' ' + lastName).trim())
     .replace(/\{\{company\}\}/g, company)
-    .replace(/\{\{senderName\}\}/g, senderName);
+    .replace(/\{\{senderName\}\}/g, senderName)
+    .replace(/\{\{regionalOffice\}\}/g, regionalOffice);
 }
 
 function renderForm() {
@@ -188,12 +189,8 @@ function openOutlook() {
     '?subject=' + encodeURIComponent(subject) +
     '&body=' + encodeURIComponent(body);
   var a = document.createElement('a');
-  a.href = mailtoLink;
-  a.target = '_blank';
-  a.rel = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  a.href = mailtoLink; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   var btn = document.getElementById('outlookBtn');
   btn.classList.add('sent');
   btn.innerHTML = '<span>&#10003; Opened in Outlook</span>';
