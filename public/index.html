@@ -17,6 +17,9 @@ html, body { height: 100%; background: #FFFFFF; }
   flex: 1; overflow-y: auto; padding: 16px 18px;
   display: flex; flex-direction: column; gap: 14px;
 }
+#bodyField { flex: 1; min-height: 160px; }
+.field-block.grow { flex: 1; display: flex; flex-direction: column; }
+.field-block.grow textarea { flex: 1; }
 .drawer-body::-webkit-scrollbar { width: 4px; }
 .drawer-body::-webkit-scrollbar-thumb { background: #C7C7CC; border-radius: 4px; }
 .field-block { display: flex; flex-direction: column; gap: 5px; }
@@ -131,8 +134,8 @@ function renderForm() {
     '<div class="rule"></div>' +
     '<div class="field-block"><div class="field-label">Subject</div>' +
     '<input type="text" id="subjectField" placeholder="Select a template to populate..."></div>' +
-    '<div class="field-block"><div class="field-label">Body</div>' +
-    '<textarea id="bodyField" rows="10" placeholder="Select a template to populate..."></textarea></div>' +
+    '<div class="field-block grow"><div class="field-label">Body</div>' +
+    '<textarea id="bodyField" rows="14" placeholder="Select a template to populate..."></textarea></div>' +
     '<div class="field-block"><div class="field-label">Internal Notes</div>' +
     '<textarea class="notes" id="notesField" rows="2" placeholder="Optional \u2014 add context for your records..."></textarea></div>';
   if (!email) setHint('This contact has no email address on file.', 'error');
