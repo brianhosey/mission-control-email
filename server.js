@@ -83,13 +83,14 @@ app.post('/log', async (req, res) => {
     [F_VISIBILITY]:   'Everyone'
   };
 
-  if (body)          fields[F_EMAIL_BODY] = body;
-  if (notes)         fields[F_NOTES]      = notes;
+  if (body)  fields[F_EMAIL_BODY] = body;
+  if (notes) fields[F_NOTES]      = notes;
+
   if (senderUserId && senderUserId.startsWith('rec')) {
     fields[F_CREATED_BY] = [senderUserId];
     console.log('createdBy:', senderUserId);
   } else {
-    console.log('No valid senderUserId received:', senderUserId);
+    console.log('No valid senderUserId:', senderUserId);
   }
 
   console.log('Writing:', JSON.stringify(fields));
@@ -109,7 +110,6 @@ app.post('/log', async (req, res) => {
 
     const data = await response.json();
 
-    // If createdBy caused the error, retry without it
     if (data.error && data.error.type === 'INVALID_RECORD_ID' && fields[F_CREATED_BY]) {
       console.log('createdBy failed, retrying without it...');
       delete fields[F_CREATED_BY];
