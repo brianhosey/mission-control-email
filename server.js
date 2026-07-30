@@ -47,7 +47,7 @@ app.get('/templates', async (req, res) => {
       name:    r.fields['templateName'] || '',
       subject: r.fields['subject']      || '',
       body:    r.fields['emailBody']    || '',
-      type:    r.fields['type']         || 'Email - General'
+      type:    r.fields['type']         || 'Email'
     })));
 
   } catch (err) {
@@ -64,7 +64,7 @@ app.post('/log', async (req, res) => {
   const subject         = String(req.body.subject         || '').trim();
   const body            = String(req.body.body            || '').trim();
   const notes           = String(req.body.notes           || '').trim();
-  const interactionType = String(req.body.interactionType || 'Email - General').trim();
+  const interactionType = String(req.body.interactionType || 'Email').trim();
   const senderUserId    = String(req.body.senderUserId    || '').trim();
 
   if (!contactId.startsWith('rec')) {
